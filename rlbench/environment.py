@@ -7,6 +7,7 @@ from pyrep.robots.end_effectors.panda_gripper import PandaGripper
 from pyrep.robots.end_effectors.jaco_gripper import JacoGripper
 from pyrep.robots.end_effectors.mico_gripper import MicoGripper
 from pyrep.robots.end_effectors.baxter_gripper import BaxterGripper
+from pyrep.robots.end_effectors.baxter_suction_cup import BaxterSuctionCup
 
 from rlbench import utils
 from rlbench.demo import Demo
@@ -37,6 +38,7 @@ SUPPORTED_ROBOTS = {
     'jaco': (Jaco, JacoGripper, 6),
     'mico': (Mico, MicoGripper, 6),
     'sawyer': (Sawyer, BaxterGripper, 7),
+    'panda_suction': (Panda, BaxterSuctionCup, 7),
 }
 
 
@@ -53,6 +55,11 @@ class Environment(object):
                  dynamics_randomization_config: DynamicsRandomizationConfig=None,
                  attach_grasped_objects: bool = True
                  ):
+        if 'suction' in robot_configuration:
+            assert obs_config.gripper_touch_forces == False,\
+                "Please disable gripper touch force observation for suction manipulator"
+            assert obs_config.gripper_joint_positions == False,\
+                "Please disable joint position observation for suction manipulator"
 
         self._dataset_root = dataset_root
         self._action_mode = action_mode

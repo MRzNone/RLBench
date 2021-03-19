@@ -184,8 +184,7 @@ class TaskEnvironment(object):
             raise ValueError('Gripper action expected to be within 0 and 1.')
 
         # Discretize the gripper action
-        current_ee = (1.0 if self._robot.gripper.get_open_amount()[0] > 0.9
-                      else 0.0)
+        current_ee = self._robot.gripper.if_open()
 
         if ee_action > 0.5:
             ee_action = 1.0
@@ -287,11 +286,12 @@ class TaskEnvironment(object):
             raise RuntimeError('Unrecognised action mode.')
 
         if current_ee != ee_action:
-            done = False
-            while not done:
-                done = self._robot.gripper.actuate(ee_action, velocity=0.2)
-                self._pyrep.step()
-                self._task.step()
+            if self._robot.is_grip():
+                done = False
+                while not done:
+                    done = self._robot.gripper.actuate(ee_action, velocity=0.2)
+                    self._pyrep.step()
+                    self._task.step()
             if ee_action == 0.0 and self._attach_grasped_objects:
                 # If gripper close action, the check for grasp.
                 for g_obj in self._task.get_graspable_objects():

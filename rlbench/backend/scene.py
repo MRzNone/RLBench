@@ -32,7 +32,10 @@ class Scene(object):
         self._active_task = None
         self._inital_task_state = None
         self._start_arm_joint_pos = robot.arm.get_joint_positions()
-        self._starting_gripper_joint_pos = robot.gripper.get_joint_positions()
+        if robot.is_grip():
+            self._starting_gripper_joint_pos = robot.gripper.get_joint_positions()
+        else:
+            self._starting_gripper_joint_pos = None
         self._workspace = Shape('workspace')
         self._workspace_boundary = SpawnBoundary([self._workspace])
         self._cam_over_shoulder_left = VisionSensor('cam_over_shoulder_left')
@@ -138,10 +141,13 @@ class Scene(object):
         self._robot.arm.set_joint_positions(self._start_arm_joint_pos, disable_dynamics=True)
         self._robot.arm.set_joint_target_velocities(
             [0] * len(self._robot.arm.joints))
-        self._robot.gripper.set_joint_positions(
-            self._starting_gripper_joint_pos, disable_dynamics=True)
-        self._robot.gripper.set_joint_target_velocities(
-            [0] * len(self._robot.gripper.joints))
+        if self._robot.is_grip():
+            self._robot.gripper.set_joint_positions(
+                self._starting_gripper_joint_pos, disable_dynamics=True)
+            self._robot.gripper.set_joint_target_velocities(
+                [0] * len(self._robot.gripper.joints))
+        else:
+            self._robot.gripper.release()
 
         if self._active_task is not None and self._has_init_task:
             self._active_task.cleanup_()
@@ -249,7 +255,7 @@ class Scene(object):
             joint_forces=(joint_forces
                           if self._obs_config.joint_forces else None),
             gripper_open=(
-                (1.0 if self._robot.gripper.get_open_amount()[0] > 0.9 else 0.0)
+                self._robot.gripper.if_open()
                 if self._obs_config.gripper_open else None),
             gripper_pose=(
                 np.array(tip.get_pose())
