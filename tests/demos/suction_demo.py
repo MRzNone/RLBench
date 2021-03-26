@@ -30,7 +30,7 @@ task = env.get_task(ReachTarget)
 
 agent = Agent(env.action_size)
 
-training_steps = 120
+training_steps = 12000
 episode_length = 40
 obs = None
 for i in range(training_steps):
